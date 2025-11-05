@@ -1,0 +1,177 @@
+scenario: multi-lane
+task: rmappo_6_0.4
+
+sumo_cfg: "env_utils/SUMO_files/scenario.sumocfg"
+max_num_seconds: 20
+vehicle_action_type: "vehicle_continuous_action"
+use_gui: True
+is_evaluation: False
+save_model_name: "seed-xx"
+use_dynamic_weight: False
+use_weight_head: False
+
+# for veh wrapper
+scene_name: "Env_MultiLane"
+max_num_CAVs: 15
+max_num_HDVs: 15
+num_CAVs: 6  # num_CAVs/penetration_CAV should be an integer multiple of 10, except for penetration_CAV=1
+num_HDVs: 9
+lane_max_num_vehs: 35
+penetration_CAV: 0.4 # only 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1 are valid
+use_V2V_info: True
+strategy: "improve"  # "base" or "improve"
+use_hist_info: True
+hist_length: 10
+warmup_steps: 0
+edge_ids: [ 'E0', 'E1',] #  'E2', 'E3',
+edge_lane_num: { 'E0': 3,
+                 'E1': 3,
+}  # 每一个 edge 对应的车道数
+node_positions: {'J0': [-2000, 0],
+                 'J1': [0, 0],
+                 'J2': [1000, 0],
+                 'J3': [3000, 0],}  # nodes的坐标, 用于计算距离
+calc_features_lane_ids: ['0', '1', '2']  # 计算对应的 lane 的信息
+log_path: './log/check_veh_env'
+delta_t: 1.0
+reward_weights: {
+    'safety': 1.0,        # 安全权重固定为1（用于固定权重模式的参考）
+    'efficiency': 0.4,    # 效率权重基准值（动态调整时的参考）
+    'stability': 0.0,     # 稳定性权重基准值（动态调整时的参考）
+    'comfort': 0.3,       # 舒适性权重基准值（动态调整时的参考）
+}
+reward_items: ['efficiency', 'comfort', 'stability', 'safety']
+time_penalty_ego: "0"
+
+# generate scene parameters-HDVs' driving style distribution
+aggressive: 0.2
+cautious: 0.2
+normal: 0.6
+# parameters for scenarios and car-following model
+parameters: {
+    'max_v': 20,
+    'min_v': 0,
+    'max_a': 8,
+    'min_a': -10,
+    'max_jerk': 3.0,
+    'min_jerk': -3.0,
+    'max_heading': 90,
+    'minGap': 2.0,
+    'tau': 1.0,
+    'max_TTC': 15,
+    'min_TTC': 0,
+    'max_ACT': 15,
+    'min_ACT': 0,
+    'max_DRAC': 10,
+    'min_DRAC': 0,
+    'max_time_headway': 5,
+    'safe_warn_threshold': {
+        'TTC': 1.5,
+        'ACT': 1.5,
+        'spacing': 3.0
+    },
+    'crash_threshold': {
+        'TTC': 0.5,
+        'ACT': 0.5,
+        'spacing': 1.5
+    },
+}
+#  improved MARL parameters
+actor_para: {}
+critic_para: {}
+# design for dynamic weights
+num_reward_head: 4
+weight_ema_decay: 0.85
+
+save_collision: 0.0
+save_episode_mean_speed: 7.65
+
+eval_weights: {
+    'w1': 0.3,  # Safety
+    'w2': 0.3,  # Efficiency
+    'w3': 0.3,  # Stability
+    'w4': 0.1,  # Comfort
+    'w21': 0.5, 'w22': 0.5,  # Efficiency metrics (ASR and TFR)
+    'w31': 0.4, 'w32': 0.6,  # Stability metrics (SSI and VSS)
+    'w_VD': 0.5, 'w_SD': 0.5,  # Velocity and spacing components in SSI
+    'w_v': 0.5, 'w_s': 0.5  # Velocity and spacing components in VSS
+}
+
+# Gradient monitoring configuration
+gradient_monitor_frequency: 10  # Monitor every N updates
+enable_gradient_monitoring: true
+gradient_clip_threshold: 10.0  # For anomaly detection
+entropy_threshold: 0.01  # For overfitting detection
+
+# traffic clustering
+scene_centers: {
+    'class_0': {
+     'v_mean': 4.429, 'a_mean': 0.065, 'a_std': 1.386, 'density': 73.557,
+    },
+    'class_1': {
+     'v_mean': 9.158, 'a_mean': 0.291, 'a_std': 1.367, 'density': 47.545,
+    },
+    'class_2': {
+     'v_mean': 11.020, 'a_mean': -0.197, 'a_std': 1.460, 'density': 43.145,
+    },
+    'class_3': {
+     'v_mean': 12.550, 'a_mean': 0.137, 'a_std': 2.725, 'density': 39.926,
+    },
+    'class_4': {
+     'v_mean': 14.620, 'a_mean': 0.257, 'a_std': 1.606, 'density': 33.261,
+    },
+}
+
+#### Additional parameters for multi-head critic and dynamic weights ####
+# Dynamic weight computation parameters (based on paper formula 9)
+epsilon_stability: 0.1  # stability parameter ε in formula μ_k = K(m_k + ε*s_k²) / Σ(m_k + ε*s_k²)
+max_reward_history: 500  # maximum size of reward history buffer for statistics
+weight_update_frequency: 20  # update dynamic weights every N episodes
+
+# Multi-scene configuration
+num_scene_classes: 5  # number of scene classes for multi-policy training
+
+# Reward normalization for dynamic weight computation
+reward_normalization:
+  method: "min_max"  # normalization method: "min_max", "z_score"
+  clip_range: [-10.0, 10.0]  # reward clipping range
+
+# Weight constraints
+weight_constraints:
+  min_weight: 0.05   # minimum weight threshold
+  max_weight: 3.0    # maximum weight threshold
+  sum_constraint: 4.0  # sum of K weights should be close to K (paper requirement)
+
+# 分层奖励权重参数
+hierarchical_weights: {
+    'basic': 1.0,
+    'coordination': 0.0,
+    'contribution': 0.0,
+    'anti_fake': 0.0,
+    'smooth': 0.4,
+    'response': 0.6,
+    'eff_contrib': 0.5,
+    'stab_contrib': 0.5,
+}
+
+# 反虚假优化参数
+anti_fake_params: {
+    'gamma_passive': 1.0,
+    'delta_fake': 0.5,
+    'theta_passive': 0.3,
+    'phi_distance': 0.2,
+    'lambda_speed': 0.5,
+}
+
+# 分类场景各车道速度特征定义
+scene_definition: {
+    0: {0: [3, 1], 1: [3, 1], 2: [3, 1]},
+    1: {0: [8, 1], 1: [8, 1], 2: [8, 1]},
+    2: {0: [11, 1], 1: [11, 1], 2: [11, 1]},
+    3: {0: [14, 1], 1: [14, 1], 2: [14, 1]},
+    4: {0: [8, 2], 1: [6, 2], 2: [8, 2]},
+    5: {0: [11, 1], 1: [9, 1], 2: [11, 1]},
+    6: {0: [14, 1], 1: [12, 1], 2: [14, 1]},
+}
+scene_specify: True
+scene_id: 4

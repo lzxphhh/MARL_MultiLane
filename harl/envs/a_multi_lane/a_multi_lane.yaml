@@ -1,0 +1,105 @@
+scenario: multi-lane
+task: hierarchical_controller
+
+sumo_cfg: "env_utils/SUMO_files/scenario.sumocfg"
+max_num_seconds: 20
+vehicle_action_type: "vehicle_continuous_action"
+use_gui: True
+is_evaluation: False
+use_dynamic_weight: False
+
+# for veh wrapper
+scene_name: "Env_MultiLane"
+max_num_CAVs: 30
+max_num_HDVs: 30
+num_CAVs: 12  # num_CAVs/penetration_CAV should be an integer multiple of 10, except for penetration_CAV=1
+num_HDVs: 18
+lane_max_num_vehs: 35
+penetration_CAV: 0.4 # only 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1 are valid
+use_V2V_info: True
+strategy: "improve"  # "base" or "improve"
+use_hist_info: True
+hist_length: 10
+warmup_steps: 0
+edge_ids: [ 'E0', 'E1', 'E2',] #  'E3',
+edge_lane_num: { 'E0': 3,
+                 'E1': 3,
+                 'E2': 3,
+}  # 每一个 edge 对应的车道数
+node_positions: {'J0': [-2000, 0],
+                 'J1': [0, 0],
+                 'J2': [1000, 0],
+                 'J3': [3000, 0],}  # nodes的坐标, 用于计算距离
+calc_features_lane_ids: ['0', '1', '2']  # 计算对应的 lane 的信息
+log_path: './log/check_veh_env'
+delta_t: 1.0
+
+# generate scene parameters-HDVs' driving style distribution
+aggressive: 0.0
+cautious: 0.0
+normal: 1.0
+# parameters for scenarios and car-following model
+parameters: {
+    'max_v': 20,
+    'min_v': 0,
+    'max_a': 8,
+    'min_a': -10,
+    'max_jerk': 3.0,
+    'min_jerk': -3.0,
+    'max_heading': 90,
+    'minGap': 2.0,
+    'tau': 1.0,
+    'max_TTC': 15,
+    'min_TTC': 0,
+    'max_ACT': 15,
+    'min_ACT': 0,
+    'max_DRAC': 10,
+    'min_DRAC': 0,
+    'max_time_headway': 5,
+    'safe_warn_threshold': {
+        'TTC': 1.5,
+        'ACT': 1.5,
+        'spacing': 3.0
+    },
+    'crash_threshold': {
+        'TTC': 0.5,
+        'ACT': 0.5,
+        'spacing': 1.5
+    },
+}
+
+# traffic clustering
+scene_centers: {
+    'class_0': {
+     'v_mean': 14.486, 'lane_v_std': 0.939, 'density': 44.600,
+    },
+    'class_1': {
+     'v_mean': 10.647, 'lane_v_std': 0.883, 'density': 56.291,
+    },
+    'class_2': {
+     'v_mean': 8.669, 'lane_v_std': 2.261, 'density': 65.223,
+    },
+    'class_3': {
+     'v_mean': 4.627, 'lane_v_std': 1.093, 'density': 86.506,
+    },
+}
+
+# 分类场景各车道速度特征定义
+scene_definition: {
+    0: {0: [4, 1], 1: [4, 1], 2: [4, 1]},  # 拥堵交通-均衡
+    1: {0: [5, 2], 1: [4, 2], 2: [5, 2]},  # 拥堵交通-非均衡程度较低
+    2: {0: [6, 2], 1: [4, 2], 2: [5, 2]},  # 拥堵交通-非均衡程度较高
+
+    3: {0: [10, 1], 1: [8, 1], 2: [9, 1]},  # 过渡交通-非均衡程度较低
+    4: {0: [11, 1], 1: [9, 1], 2: [10, 1]},
+
+    5: {0: [12, 1], 1: [10, 2], 2: [7, 1]},  # 过渡交通-非均衡程度较高
+    6: {0: [13, 1], 1: [10, 2], 2: [8, 1]},
+
+    7: { 0: [15, 1], 1: [15, 1], 2: [15, 1] },  # 自由流-均衡
+    8: {0: [15, 1], 1: [13, 2], 2: [14, 1]},  # 自由流-非均衡程度较低
+    9: {0: [15, 2], 1: [12, 2], 2: [14, 2]},  # 自由流-非均衡程度较高
+}
+scene_specify: True
+scene_id: 6
+scene_length: 120

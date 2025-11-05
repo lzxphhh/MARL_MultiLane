@@ -1,0 +1,229 @@
+# 批量训练配置文件
+
+# 基础配置文件路径
+base_yaml_path: "a_multi_lane.yaml"
+
+# 实验名称
+exp_name: "0621_hierarchical_reward"
+
+# 邮件配置
+email_config:
+  sender: "zhengxuanliu@126.com"
+  password: "LDZCEBXnnHRiaLKP"  # 邮箱授权码
+  receiver: "zhengxuanliu@126.com"
+  smtp_server: "smtp.126.com"
+  smtp_port: 465
+
+# 监控配置
+monitoring_config:
+  max_training_hours: 72          # 最大训练时间（小时）
+  check_interval_seconds: 10      # 检查间隔（秒）
+  max_no_progress_checks: 20      # 最大无进度检查次数
+
+# 成功标准
+success_criteria:
+  final_reward: 100              # 最终奖励阈值
+  collision_rate:
+    max: 0.0                     # 最大碰撞率
+  mean_speed:
+    min: 7.6                     # 最小平均速度
+
+# 训练案例配置
+training_cases:
+  # Case 1: 基础奖励+反虚假奖励
+  - test_desc: "8_basic_0.6_anti_fake_0.4"
+    algo: "mappo"
+    env: "a_single_lane"
+    params:
+      leader_id: 8
+      use_dynamic_weight: False
+      reward_weights.safety: 1.0
+      reward_weights.efficiency: 0.4
+      reward_weights.stability: 0.3
+      reward_weights.comfort: 0.3
+      hierarchical_weights.basic: 0.6
+      hierarchical_weights.coordination: 0.0
+      hierarchical_weights.contribution: 0.0
+      hierarchical_weights.anti_fake: 0.4
+    additional_args:
+      seed: 42
+
+  # Case 2: 基础奖励+反虚假奖励
+  - test_desc: "8_basic_0.8_anti_fake_0.2"
+    algo: "mappo"
+    env: "a_single_lane"
+    params:
+      leader_id: 8
+      use_dynamic_weight: False
+      reward_weights.safety: 1.0
+      reward_weights.efficiency: 0.4
+      reward_weights.stability: 0.3
+      reward_weights.comfort: 0.3
+      hierarchical_weights.basic: 0.8
+      hierarchical_weights.coordination: 0.0
+      hierarchical_weights.contribution: 0.0
+      hierarchical_weights.anti_fake: 0.2
+    additional_args:
+      seed: 42
+
+  # Case 3: 基础奖励+反虚假奖励
+  - test_desc: "8_basic_0.5_anti_fake_0.5"
+    algo: "mappo"
+    env: "a_single_lane"
+    params:
+      leader_id: 8
+      use_dynamic_weight: False
+      reward_weights.safety: 1.0
+      reward_weights.efficiency: 0.4
+      reward_weights.stability: 0.3
+      reward_weights.comfort: 0.3
+      hierarchical_weights.basic: 0.5
+      hierarchical_weights.coordination: 0.0
+      hierarchical_weights.contribution: 0.0
+      hierarchical_weights.anti_fake: 0.5
+    additional_args:
+      seed: 42
+
+  # Case 4: 基础奖励+贡献奖励
+  - test_desc: "8_basic_0.6_contribution_0.4"
+    algo: "mappo"
+    env: "a_single_lane"
+    params:
+      leader_id: 8
+      use_dynamic_weight: False
+      reward_weights.safety: 1.0
+      reward_weights.efficiency: 0.4
+      reward_weights.stability: 0.3
+      reward_weights.comfort: 0.3
+      hierarchical_weights.basic: 0.6
+      hierarchical_weights.coordination: 0.0
+      hierarchical_weights.contribution: 0.4
+      hierarchical_weights.anti_fake: 0.0
+    additional_args:
+      seed: 42
+
+  # Case 5: 基础奖励+贡献奖励
+  - test_desc: "8_basic_0.8_contribution_0.2"
+    algo: "mappo"
+    env: "a_single_lane"
+    params:
+      leader_id: 8
+      use_dynamic_weight: False
+      reward_weights.safety: 1.0
+      reward_weights.efficiency: 0.4
+      reward_weights.stability: 0.3
+      reward_weights.comfort: 0.3
+      hierarchical_weights.basic: 0.8
+      hierarchical_weights.coordination: 0.0
+      hierarchical_weights.contribution: 0.0
+      hierarchical_weights.anti_fake: 0.2
+    additional_args:
+      seed: 42
+
+  # Case 6: 基础奖励+协同奖励
+  - test_desc: "8_basic_0.8_coordination_0.2"
+    algo: "mappo"
+    env: "a_single_lane"
+    params:
+      leader_id: 8
+      use_dynamic_weight: False
+      reward_weights.safety: 1.0
+      reward_weights.efficiency: 0.4
+      reward_weights.stability: 0.3
+      reward_weights.comfort: 0.3
+      hierarchical_weights.basic: 0.8
+      hierarchical_weights.coordination: 0.2
+      hierarchical_weights.contribution: 0.0
+      hierarchical_weights.anti_fake: 0.0
+    additional_args:
+      seed: 42
+
+  # Case 7: 基础奖励+协同奖励
+  - test_desc: "8_basic_0.6_coordination_0.4"
+    algo: "mappo"
+    env: "a_single_lane"
+    params:
+      leader_id: 8
+      use_dynamic_weight: False
+      reward_weights.safety: 1.0
+      reward_weights.efficiency: 0.4
+      reward_weights.stability: 0.3
+      reward_weights.comfort: 0.3
+      hierarchical_weights.basic: 0.6
+      hierarchical_weights.coordination: 0.4
+      hierarchical_weights.contribution: 0.0
+      hierarchical_weights.anti_fake: 0.0
+    additional_args:
+      seed: 42
+
+  # Case 8: 基础奖励+反虚假奖励+协同奖励
+  - test_desc: "8_basic_0.6_anti_fake_0.2_coordination_0.2"
+    algo: "mappo"
+    env: "a_single_lane"
+    params:
+      leader_id: 8
+      use_dynamic_weight: False
+      reward_weights.safety: 1.0
+      reward_weights.efficiency: 0.4
+      reward_weights.stability: 0.3
+      reward_weights.comfort: 0.3
+      hierarchical_weights.basic: 0.6
+      hierarchical_weights.coordination: 0.2
+      hierarchical_weights.contribution: 0.0
+      hierarchical_weights.anti_fake: 0.2
+    additional_args:
+      seed: 42
+
+  # Case 9: 基础奖励+反虚假奖励+贡献奖励
+  - test_desc: "8_basic_0.6_anti_fake_0.2_contribution_0.2"
+    algo: "mappo"
+    env: "a_single_lane"
+    params:
+      leader_id: 8
+      use_dynamic_weight: False
+      reward_weights.safety: 1.0
+      reward_weights.efficiency: 0.4
+      reward_weights.stability: 0.3
+      reward_weights.comfort: 0.3
+      hierarchical_weights.basic: 0.6
+      hierarchical_weights.coordination: 0.0
+      hierarchical_weights.contribution: 0.2
+      hierarchical_weights.anti_fake: 0.2
+    additional_args:
+      seed: 42
+
+  # Case 10: 基础奖励+反虚假奖励+贡献奖励+协同奖励
+  - test_desc: "8_basic_0.6_anti_fake_0.2_contribution_0.1_coordination_0.1"
+    algo: "mappo"
+    env: "a_single_lane"
+    params:
+      leader_id: 8
+      use_dynamic_weight: False
+      reward_weights.safety: 1.0
+      reward_weights.efficiency: 0.4
+      reward_weights.stability: 0.3
+      reward_weights.comfort: 0.3
+      hierarchical_weights.basic: 0.6
+      hierarchical_weights.coordination: 0.1
+      hierarchical_weights.contribution: 0.1
+      hierarchical_weights.anti_fake: 0.2
+    additional_args:
+      seed: 42
+
+  # Case 11: 基础奖励+反虚假奖励+贡献奖励+协同奖励
+  - test_desc: "8_basic_0.5_anti_fake_0.3_contribution_0.1_coordination_0.1"
+    algo: "mappo"
+    env: "a_single_lane"
+    params:
+      leader_id: 8
+      use_dynamic_weight: False
+      reward_weights.safety: 1.0
+      reward_weights.efficiency: 0.4
+      reward_weights.stability: 0.3
+      reward_weights.comfort: 0.3
+      hierarchical_weights.basic: 0.5
+      hierarchical_weights.coordination: 0.1
+      hierarchical_weights.contribution: 0.1
+      hierarchical_weights.anti_fake: 0.3
+    additional_args:
+      seed: 42

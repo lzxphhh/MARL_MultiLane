@@ -1,0 +1,217 @@
+scenario: multi-lane
+task: rmappo_4_0.4
+
+sumo_cfg: "env_utils/Straight_SUMO_files/scenario.sumocfg"
+max_num_seconds: 50
+vehicle_action_type: "lane_continuous_speed"
+use_gui: False
+is_evaluation: False
+save_model_name: "seed-xx"
+use_dynamic_weight: False
+use_weight_head: False
+
+# for veh wrapper
+scene_name: "Env_MultiLane"
+max_num_CAVs: 10
+max_num_HDVs: 10
+num_CAVs: 4  # num_CAVs/penetration_CAV should be an integer multiple of 10, except for penetration_CAV=1
+num_HDVs: 6
+lane_max_num_vehs: 10
+penetration_CAV: 0.4 # only 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1 are valid
+leader_specify: True
+leader_id: 8
+use_V2V_info: True
+strategy: "improve"  # "base" or "iMARL" or "simple" or "improve"
+use_hist_info: True
+hist_length: 10
+warmup_steps: 0
+edge_ids: [ 'E0', 'E1',] #  'E2', 'E3',
+edge_lane_num: { 'E0': 1,
+                 'E1': 1,
+}  # 每一个 edge 对应的车道数
+node_positions: {'J0': [-500, 0],
+                 'J1': [0, 0],
+                 'J2': [2000, 0] }  # nodes的坐标, 用于计算距离
+calc_features_lane_ids: ['E0_0',
+                         'E1_0',
+                         ]  # 计算对应的 lane 的信息
+log_path: './log/check_veh_env'
+delta_t: 0.1
+obs_size: "2 + 1 + 6 + 4 * 6 + 5"
+shared_obs_size: "2 + self.max_num_CAVs * 5 + 5"
+reward_weights: {
+    'safety': 1.0,        # 安全权重固定为1（用于固定权重模式的参考）
+    'efficiency': 0.4,    # 效率权重基准值（动态调整时的参考）
+    'stability': 0.3,     # 稳定性权重基准值（动态调整时的参考）
+    'comfort': 0.3,       # 舒适性权重基准值（动态调整时的参考）
+}
+reward_items: ['efficiency', 'comfort', 'stability', 'safety']
+time_penalty_ego: "0"
+
+# generate scene parameters-HDVs' driving style distribution
+aggressive: 0.2
+cautious: 0.2
+normal: 0.6
+# parameters for scenarios and car-following model
+parameters: {
+    'max_v': 20,
+    'min_v': 0,
+    'max_a': 4,
+    'max_jerk': 1.5,
+    'max_heading': 90,
+    'minGap': 2.5,
+    'tau': 1.0,
+    'max_TTC': 15,
+    'min_TTC': 0,
+    'max_ACT': 15,
+    'min_ACT': 0,
+    'max_DRAC': 10,
+    'min_DRAC': 0,
+    'safe_warn_threshold': {
+        'TTC': 1.5,
+        'ACT': 1.5,
+        'spacing': 3.0
+    },
+    'crash_threshold': {
+        'TTC': 0.5,
+        'ACT': 0.5,
+        'spacing': 1.5
+    },
+}
+#  improved MARL parameters
+actor_para: {
+    'forward_GAT': {
+        'n_hid': 32,
+        'nclass': 64,
+        'dropout': 0.1,
+        'alpha': 0.2,
+        'nheads': 1,
+    },
+    'backward_GAT': {
+        'n_hid': 32,
+        'nclass': 64,
+        'dropout': 0.1,
+        'alpha': 0.2,
+        'nheads': 1,
+    },
+    'temporal': {
+        'n_hid': [32, 64],
+        'kernel_size': [2, 2, 3],
+    },
+    'GAT1':{
+        'out_dim': 128,
+        'num_heads': 1,
+    },
+    'GAT2': {
+        'out_dim': 96,
+        'num_heads': 1,
+    },
+    'backward_reasoning':{
+        'n_hid': 128,
+        'output_dim': 96,
+    }
+}
+critic_para: {
+    'flow_Linear': {
+        'out_feature': 64,
+    },
+    'distribution_Linear': {
+        'out_feature': 64,
+    },
+    'GRU': {
+      'hidden_size': 64,
+      'num_layers': 1,
+    },
+    'leaky_relu': {
+        'negative_slope': 0.01,
+    },
+    'cross_attention': {
+        'heads': 32,
+        'dim_head': 64,
+        'dropout': 0.1,
+    },
+}
+# design for dynamic weights
+num_reward_head: 4
+weight_ema_decay: 0.85
+
+save_collision: 0.0
+save_episode_mean_speed: 7.6
+
+eval_weights: {
+    'w1': 0.3,  # Safety
+    'w2': 0.3,  # Efficiency
+    'w3': 0.3,  # Stability
+    'w4': 0.1,  # Comfort
+    'w21': 0.5, 'w22': 0.5,  # Efficiency metrics (ASR and TFR)
+    'w31': 0.4, 'w32': 0.6,  # Stability metrics (SSI and VSS)
+    'w_VD': 0.5, 'w_SD': 0.5,  # Velocity and spacing components in SSI
+    'w_v': 0.5, 'w_s': 0.5  # Velocity and spacing components in VSS
+}
+
+# Gradient monitoring configuration
+gradient_monitor_frequency: 10  # Monitor every N updates
+enable_gradient_monitoring: true
+gradient_clip_threshold: 10.0  # For anomaly detection
+entropy_threshold: 0.01  # For overfitting detection
+
+# traffic clustering
+scene_centers: {
+    'class_0': {
+     'v_mean': 4.429, 'a_mean': 0.065, 'a_std': 1.386, 'density': 73.557,
+    },
+    'class_1': {
+     'v_mean': 9.158, 'a_mean': 0.291, 'a_std': 1.367, 'density': 47.545,
+    },
+    'class_2': {
+     'v_mean': 11.020, 'a_mean': -0.197, 'a_std': 1.460, 'density': 43.145,
+    },
+    'class_3': {
+     'v_mean': 12.550, 'a_mean': 0.137, 'a_std': 2.725, 'density': 39.926,
+    },
+    'class_4': {
+     'v_mean': 14.620, 'a_mean': 0.257, 'a_std': 1.606, 'density': 33.261,
+    },
+}
+
+#### Additional parameters for multi-head critic and dynamic weights ####
+# Dynamic weight computation parameters (based on paper formula 9)
+epsilon_stability: 0.1  # stability parameter ε in formula μ_k = K(m_k + ε*s_k²) / Σ(m_k + ε*s_k²)
+max_reward_history: 500  # maximum size of reward history buffer for statistics
+weight_update_frequency: 20  # update dynamic weights every N episodes
+
+# Multi-scene configuration
+num_scene_classes: 5  # number of scene classes for multi-policy training
+
+# Reward normalization for dynamic weight computation
+reward_normalization:
+  method: "min_max"  # normalization method: "min_max", "z_score"
+  clip_range: [-10.0, 10.0]  # reward clipping range
+
+# Weight constraints
+weight_constraints:
+  min_weight: 0.05   # minimum weight threshold
+  max_weight: 3.0    # maximum weight threshold
+  sum_constraint: 4.0  # sum of K weights should be close to K (paper requirement)
+
+# 分层奖励权重参数
+hierarchical_weights: {
+    'basic': 0.6,
+    'coordination': 0.0,
+    'contribution': 0.0,
+    'anti_fake': 0.4,
+    'smooth': 0.4,
+    'response': 0.6,
+    'eff_contrib': 0.6,
+    'stab_contrib': 0.4
+}
+
+# 反虚假优化参数
+anti_fake_params: {
+    'gamma_passive': 1.0,
+    'delta_fake': 0.5,
+    'theta_passive': 0.3,
+    'phi_distance': 0.2,
+    'lambda_speed': 0.5,
+    'max_jerk': 2.5
+}
