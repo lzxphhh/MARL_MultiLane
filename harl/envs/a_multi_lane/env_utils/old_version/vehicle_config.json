@@ -1,0 +1,113 @@
+{
+  "speed_ranges": {
+    "low": {"min": 0, "max": 7},
+    "medium": {"min": 7, "max": 12},
+    "high": {"min": 12, "max": 20}
+  },
+  "vehicle_types": {
+    "ego": {
+      "description": "Connected and Automated Vehicles with CACC",
+      "base_params": {
+        "vClass": "passenger",
+        "length": "5.00",
+        "maxSpeed": "20.0",
+        "color": "10,191,255",
+        "carFollowModel": "CACC",
+        "laneChangeModel": "SL2015",
+        "lcCooperative": "1.0",
+        "lcSpeedGain": "100",
+        "lcStrategic": "100",
+        "lcAssertive": "10"
+      },
+      "speed_variants": {
+        "low": {"tau": 1.0, "minGap": 1.0, "accel": 5, "decel": 5},
+        "medium": {"tau": 1.0, "minGap": 1.0, "accel": 5, "decel": 5},
+        "high": {"tau": 1.0, "minGap": 1.0, "accel": 5, "decel": 5}
+      }
+    },
+    "leader": {
+      "description": "Leader vehicles using IDM model",
+      "base_params": {
+        "vClass": "taxi",
+        "length": "5.00",
+        "maxSpeed": "20.00",
+        "color": "244,193,92",
+        "carFollowModel": "IDM",
+        "emergencyDecel": "9.0"
+      },
+      "speed_variants": {
+        "low": {"tau": 1.0, "minGap": 1.0, "accel": 4.0, "decel": 6.0},
+        "medium": {"tau": 1.5, "minGap": 1.5, "accel": 4.0, "decel": 6.0},
+        "high": {"tau": 2.5, "minGap": 2.0, "accel": 4.0, "decel": 6.0}
+      }
+    },
+    "follower": {
+      "description": "Follower vehicles using IDM model",
+      "base_params": {
+        "vClass": "taxi",
+        "length": "5.00",
+        "maxSpeed": "20.00",
+        "color": "244,193,92",
+        "carFollowModel": "IDM",
+        "emergencyDecel": "9.0"
+      },
+      "speed_variants": {
+        "low": {"tau": 1.0, "minGap": 1.0, "accel": 4.0, "decel": 6.0},
+        "medium": {"tau": 1.5, "minGap": 1.5, "accel": 4.0, "decel": 6.0},
+        "high": {"tau": 2.5, "minGap": 2.0, "accel": 4.0, "decel": 6.0}
+      }
+    },
+    "HDV_0": {
+      "description": "Aggressive human-driven vehicles",
+      "base_params": {
+        "vClass": "taxi",
+        "length": "5.00",
+        "maxSpeed": "20.00",
+        "color": "112,100,78",
+        "carFollowModel": "IDM",
+        "emergencyDecel": "9.0"
+      },
+      "speed_variants": {
+        "low": {"tau": 1.0, "minGap": 0.8, "accel": 4.0, "decel": 6.0},
+        "medium": {"tau": 2.0, "minGap": 0.8, "accel": 4.0, "decel": 6.0},
+        "high": {"tau": 3.0, "minGap": 0.8, "accel": 4.0, "decel": 6.0}
+      }
+    },
+    "HDV_1": {
+      "description": "Normal human-driven vehicles",
+      "base_params": {
+        "vClass": "taxi",
+        "length": "5.00",
+        "maxSpeed": "20.00",
+        "color": "112,100,78",
+        "carFollowModel": "IDM",
+        "emergencyDecel": "9.0"
+      },
+      "speed_variants": {
+        "low": {"tau": 1.5, "minGap": 1.5, "accel": 2.5, "decel": 4.5},
+        "medium": {"tau": 2.0, "minGap": 1.5, "accel": 2.5, "decel": 4.5},
+        "high": {"tau": 3.0, "minGap": 1.5, "accel": 2.5, "decel": 4.5}
+      }
+    },
+    "HDV_2": {
+      "description": "Cautious human-driven vehicles",
+      "base_params": {
+        "vClass": "taxi",
+        "length": "5.00",
+        "maxSpeed": "20.00",
+        "color": "112,100,78",
+        "carFollowModel": "IDM",
+        "emergencyDecel": "9.0"
+      },
+      "speed_variants": {
+        "low": {"tau": 2.5, "minGap": 2.0, "accel": 1.5, "decel": 2.5},
+        "medium": {"tau": 3.0, "minGap": 2.0, "accel": 1.5, "decel": 2.5},
+        "high": {"tau": 4.0, "minGap": 2.0, "accel": 1.5, "decel": 2.5}
+      }
+    }
+  },
+  "routes": {
+    "route_0": {"edges": "E0 E1 E2"},
+    "route_1": {"edges": "E1 E2"}
+  }
+}
