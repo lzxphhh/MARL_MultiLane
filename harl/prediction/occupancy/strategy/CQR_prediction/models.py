@@ -22,7 +22,7 @@ import torch.nn.functional as F
 from typing import Dict, Tuple, Optional
 import random
 import math
-from feature_encoder import FeatureEncoder
+from .feature_encoder import FeatureEncoder
 
 
 class MLPQR(nn.Module):

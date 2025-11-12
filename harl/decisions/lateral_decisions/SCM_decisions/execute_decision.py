@@ -345,6 +345,38 @@ class SCMDecisionMaker:
             'total_params': sum(p.numel() for p in self.model.parameters())
         }
 
+    def _freeze_parameters(self):
+        """
+        冻结SCM模型参数
+
+        根据当前freeze_base_model设置:
+        - True: 冻结所有SCM层,仅保留decision_threshold可训练
+        - False: 所有参数可训练
+        """
+        if self.freeze_base_model:
+            # 冻结SCM模型的所有层
+            for param in self.model.scm_model.parameters():
+                param.requires_grad = False
+            # 保持decision_threshold可训练
+            self.model.decision_threshold.requires_grad = True
+            print(f"[SCMDecisionMaker] 冻结SCM基础模型,仅decision_threshold可训练")
+        else:
+            # 所有参数可训练
+            for param in self.model.parameters():
+                param.requires_grad = True
+            print(f"[SCMDecisionMaker] 所有参数可训练")
+
+    def _unfreeze_parameters(self):
+        """
+        解冻SCM模型参数
+
+        将所有参数设置为可训练状态
+        """
+        for param in self.model.parameters():
+            param.requires_grad = True
+        self.freeze_base_model = False
+        print(f"[SCMDecisionMaker] 解冻所有参数")
+
 
 class SCMDecisionMakerFactory:
     """
