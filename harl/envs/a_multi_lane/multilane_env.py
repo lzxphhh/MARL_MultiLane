@@ -48,10 +48,8 @@ def make_multilane_envs(args):
     save_model_name = args['save_model_name']
     eval_weights = args['eval_weights']
     scene_centers = args['scene_centers']
-
-    hierarchical_weights = args['hierarchical_weights']
-    anti_fake_params = args['anti_fake_params']
     scene_definition = args['scene_definition']
+    scene_length = args['scene_length']
 
     veh_env = VehEnvironment(
         sumo_cfg=sumo_cfg,
@@ -94,9 +92,8 @@ def make_multilane_envs(args):
         save_model_name=save_model_name,
         eval_weights=eval_weights,
         scene_centers=scene_centers,
-        hierarchical_weights=hierarchical_weights,
-        anti_fake_params=anti_fake_params,
         scene_definition=scene_definition,
+        scene_length=scene_length,
     )
     return veh_env
 

@@ -48,9 +48,6 @@ DECISION_STR = {
     1: 'pre_change_right',
 }
 
-
-
-
 if __name__ == '__main__':
     path_convert = get_abs_path(__file__)
     set_logger(path_convert('./'))

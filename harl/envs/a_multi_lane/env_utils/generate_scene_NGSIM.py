@@ -308,7 +308,7 @@ def get_distribution_and_vehicle_names(scene_gen: ConfigBasedSceneGenerator,
         base_id = lane_idx * 100
         # 跟随车辆ID从20开始，避免与Leader ID冲突
         for j in range(10):
-            follower_id = base_id + leader_counts[lane_idx] + 10 + j
+            follower_id = base_id + 30 + j
             vehicle_names[follower_id] = f'Follower_{lane_idx}_{j}'
 
     platoon_rows = []
@@ -370,7 +370,7 @@ def get_distribution_and_vehicle_names(scene_gen: ConfigBasedSceneGenerator,
 
         # 阶段4: 生成HDV+CAV段车辆（紧跟Leader段）
         for j in range(lane_num_veh):
-            vehicle_id = lane_idx * 100 + num_leaders + j  # 对应follower_id的生成逻辑
+            vehicle_id = lane_idx * 100 + 20 + j  # 对应follower_id的生成逻辑
             follower_vel = mean_v + random.uniform(-1, 1) * std_v / 4
 
             # 根据车道分布确定车辆类型
@@ -429,7 +429,7 @@ def get_distribution_and_vehicle_names(scene_gen: ConfigBasedSceneGenerator,
         # 阶段5: 生成Follower段车辆（紧跟HDV+CAV段）
         remaining_followers = 10  # 剩余的Follower数量
         for j in range(remaining_followers):
-            vehicle_id = lane_idx * 100 + num_leaders + 10 + j
+            vehicle_id = lane_idx * 100 + 30 + j
             vehicle_name = f'Follower_{lane_idx}_{j}'
             des_vel = mean_v + random.uniform(-1, 1) * std_v / 4
 

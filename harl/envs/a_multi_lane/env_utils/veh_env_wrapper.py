@@ -8,7 +8,6 @@ from loguru import logger
 import pandas as pd
 import random
 
-from .generate_scene import generate_scenario
 from .generate_scene_NGSIM import generate_scenario_NGSIM
 from .wrapper_utils import (
     analyze_traffic,
@@ -49,27 +48,6 @@ IDM_PARAMS = {
     'v_desired': 30.0  # 期望速度 (m/s)
 }
 
-# # 定义MPC参数
-# MPC_PARAMS = {
-#     'dt': 0.1,  # 时间步长
-#     'N_p': 10,  # 预测时域
-#     'N_c': 3,  # 控制时域
-#     'w_safe': 5.0,  # 安全距离误差权重-安全
-#     'w_v': 2.0,  # 速度差权重-效率
-#     'w_a': 1.0,  # 控制输入权重-舒适性
-#     'w_da': 1.0,  # 加速度变化权重-舒适性
-#     'w_stability': 1.0,  # 稳定性变化权重-稳定性
-#     'd_min': 2.0,  # 静止时的安全距离 (m)
-#     'T_exp': 1.5,  # 期望车间时距 (s)
-#     'a_max': 3.0,  # 最大加速度 (m/s²)
-#     'a_min': -3.0,  # 最大减速度 (m/s²)
-#     'v_min': 0.0,  # 最小速度 (m/s)
-#     'v_max': 30.0,  # 最大速度 (m/s)
-#     'theta_p': 1.0,  # 位置稳定性权重
-#     'theta_v': 0.5  # 速度稳定性权重
-# }
-
-
 class VehEnvWrapper(gym.Wrapper):
     """Vehicle Env Wrapper for vehicle info
     """
@@ -106,9 +84,8 @@ class VehEnvWrapper(gym.Wrapper):
                  save_model_name: str,   #模型名称（训练自动生成）--用于存储测试评估结果
                  eval_weights: Dict[str, float],
                  scene_centers: Dict[str, Dict[str, float]],
-                 hierarchical_weights: Dict[str, float],
-                 anti_fake_params: Dict[str, float],
                  scene_definition: Dict[int, Dict[int, List[int]]],
+                 scene_length: int,
                  ) -> None:
         super().__init__(env)
         self.name_scenario = name_scenario
@@ -148,7 +125,10 @@ class VehEnvWrapper(gym.Wrapper):
         self.realtime_class = []
 
         self.ego_ids = [f'CAV_{i}' for i in range(self.num_CAVs)]
-        self.veh_ids = self.ego_ids + [f'HDV_{i}' for i in range(self.num_HDVs-3)] + ['Leader_0', 'Leader_1', 'Leader_2']
+        self.mixed_hdv_ids = [f'HDV_{i}' for i in range(self.num_HDVs)]
+        self.leader_ids = [f'Leader_{i}_{j}' for i in range(3) for j in range(20)]
+        self.follower_ids = [f'Follower_{i}_{j}' for i in range(3) for j in range(10)]
+        self.veh_ids = self.ego_ids + self.mixed_hdv_ids + self.leader_ids + self.follower_ids
         self.vehs_start = {}
 
         # 记录当前速度
@@ -204,28 +184,14 @@ class VehEnvWrapper(gym.Wrapper):
         self.act_record = {ego_id: [] for ego_id in self.ego_ids}
         self.crash_record = {ego_id: 0 for ego_id in self.ego_ids}
 
-        # 分层奖励相关的历史记录
-        self.acceleration_hist = {}
-
-        # 分层奖励权重参数
-        self.hierarchical_weights = hierarchical_weights
-
-        # 反虚假优化参数
-        self.anti_fake_params = anti_fake_params
-
-        # # baseline controller- MPC
-        # self.mpc = MPCController(MPC_PARAMS)
-
         self.actor_action = {ego_id: [] for ego_id in self.ego_ids}
-        self.lowercontroller_action = {ego_id: [] for ego_id in self.ego_ids}
-
         self.scene_definition = scene_definition
         if scene_specify:
-            scene_class_id = scene_id
+            self.scene_class_id = scene_id
         else:
-            scene_class_id = random.randint(0, 6)
-
-        self.scene_info = scene_definition[scene_class_id]
+            self.scene_class_id = random.randint(0, 11)
+        self.scene_length = scene_length
+        self.scene_info = scene_definition[self.scene_class_id]
         self.config_file = "/home/lzx/00_Projects/00_platoon_MARL/HARL/harl/envs/a_multi_lane/env_utils/vehicle_config.json"
 
         # # 保存车辆运动信息
@@ -258,8 +224,13 @@ class VehEnvWrapper(gym.Wrapper):
     @property
     def action_space(self):
         """定义连续的动作空间，加速度范围为 [-3, 3]"""
+        # 一维动作空间
+        # return {_ego_id: gym.spaces.Box(
+        #     low=np.array([-1.0]), high=np.array([1.0]), dtype=np.float32
+        # ) for _ego_id in self.ego_ids}
+        # 二维动作空间
         return {_ego_id: gym.spaces.Box(
-            low=np.array([-1.5, -1.5]), high=np.array([1.5, 1.5]), shape=(2,), dtype=np.float64
+            low=np.array([-1.5, -3]), high=np.array([1.5, 3]), shape=(2,), dtype=np.float64
         ) for _ego_id in
                 self.ego_ids}
 
@@ -321,7 +292,7 @@ class VehEnvWrapper(gym.Wrapper):
 
         def get_vehicle_type(target_id):
             """获取车辆类型"""
-            if target_id[:3] == 'HDV' or target_id[:6] == 'Leader':
+            if target_id[:3] == 'HDV' or target_id[:6] == 'Leader' or target_id[:8] == 'Follower':
                 return 0
             elif target_id[:3] == 'CAV':
                 return 1
@@ -697,17 +668,17 @@ class VehEnvWrapper(gym.Wrapper):
                 self.act_record = {ego_id: [] for ego_id in self.ego_ids}
                 self.crash_record = {ego_id: 0 for ego_id in self.ego_ids}
         save_motion_dir = self.save_motion_dir
-        ttc_record, act_record, crash_record, classified_scene = observation_analysis(
-            state=state, reward_statistics=reward_statistics, flow_statistics=flow_statistics,
-            vehicle_names=self.vehicle_names, is_evaluation=self.is_evaluation, save_csv_dir=save_motion_dir, sim_time=sim_time,
-            ttc_hist=self.ttc_record, act_hist=self.act_record, crash_count=self.crash_record, scene_centers=self.scene_centers,
-        )
-        # Convert 'class_X' to X
-        classified_scene_mark = int(classified_scene.split('_')[1])
-        self.realtime_class.append(classified_scene_mark)
-        self.ttc_record = ttc_record
-        self.act_record = act_record
-        self.crash_record = crash_record
+        # ttc_record, act_record, crash_record, classified_scene = observation_analysis(
+        #     state=state, reward_statistics=reward_statistics, flow_statistics=flow_statistics,
+        #     vehicle_names=self.vehicle_names, is_evaluation=self.is_evaluation, save_csv_dir=save_motion_dir, sim_time=sim_time,
+        #     ttc_hist=self.ttc_record, act_hist=self.act_record, crash_count=self.crash_record, scene_centers=self.scene_centers,
+        # )
+        # # Convert 'class_X' to X
+        # classified_scene_mark = int(classified_scene.split('_')[1])
+        # self.realtime_class.append(classified_scene_mark)
+        # self.ttc_record = ttc_record
+        # self.act_record = act_record
+        # self.crash_record = crash_record
         start_time = time.time()
 
         # 计算每个 ego vehicle 的 state 拼接为向量
@@ -1000,20 +971,17 @@ class VehEnvWrapper(gym.Wrapper):
 
         # 初始化环境
         init_state = self.env.reset()
-        # 生成车流
-        # self.vehs_start, self.current_speed, self.vehicle_names = generate_scenario(aggressive=self.aggressive,
-        #                   cautious=self.cautious,
-        #                   normal=self.normal,
-        #                   use_gui=self.use_gui, sce_name=self.name_scenario,
-        #                   CAV_num=self.num_CAVs, HDV_num=self.num_HDVs, CAV_penetration=self.CAV_penetration,
-        #                   distribution="uniform", group_id=self.group_id)
+        leader_0_path = f'/home/lzx/00_Projects/00_platoon_MARL/HARL/harl/envs/a_multi_lane/env_utils/NGSIM_trajectories/time_window_{self.scene_length}s/{self.scene_definition[self.scene_class_id][0][0]}_{self.scene_definition[self.scene_class_id][0][1]}/vehicle_0.csv'
+        leader_1_path = f'/home/lzx/00_Projects/00_platoon_MARL/HARL/harl/envs/a_multi_lane/env_utils/NGSIM_trajectories/time_window_{self.scene_length}s/{self.scene_definition[self.scene_class_id][1][0]}_{self.scene_definition[self.scene_class_id][1][1]}/vehicle_1.csv'
+        leader_2_path = f'/home/lzx/00_Projects/00_platoon_MARL/HARL/harl/envs/a_multi_lane/env_utils/NGSIM_trajectories/time_window_{self.scene_length}s/{self.scene_definition[self.scene_class_id][2][0]}_{self.scene_definition[self.scene_class_id][2][1]}/vehicle_2.csv'
+        leaders_path = [leader_0_path, leader_1_path, leader_2_path]
 
         self.vehs_start, self.current_speed, self.vehicle_names, self.leader_counts = generate_scenario_NGSIM(
             config_file=self.config_file,
             aggressive=self.aggressive, cautious=self.cautious, normal=self.normal,
             use_gui=self.use_gui, sce_name=self.name_scenario,
             CAV_num=self.num_CAVs, HDV_num=self.num_HDVs, CAV_penetration=self.CAV_penetration,
-            distribution="uniform", scene_info=self.scene_info)
+            distribution="uniform", scene_info=self.scene_info, leaders_path=leaders_path)
 
         # if 0 <= self.total_timesteps < 1000000:
         #     assert self.num_CAVs == 5
